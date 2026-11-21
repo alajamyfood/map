@@ -7,6 +7,9 @@
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Marker Cluster CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   
   <!-- Google Fonts - Arabic friendly -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -429,25 +432,47 @@
       }
     }
 
-    /* Custom marker */
-    .custom-marker {
-      background: var(--primary);
-      border: 3px solid white;
-      border-radius: 50% 50% 50% 0;
-      width: 28px;
-      height: 28px;
-      transform: rotate(-45deg);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    /* Custom Alajamy Pin Marker */
+    .alajamy-marker {
+      background: transparent;
+      border: none;
     }
 
-    .custom-marker span {
-      transform: rotate(45deg);
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
+    .alajamy-marker .pin {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #0d7377 0%, #14919b 100%);
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      border: 3px solid #ffffff;
+      box-shadow: 0 3px 10px rgba(13, 115, 119, 0.45);
+      position: relative;
+    }
+
+    .alajamy-marker .pin-inner {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: white;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Cluster styling */
+    .marker-cluster-small,
+    .marker-cluster-medium,
+    .marker-cluster-large {
+      background-color: rgba(13, 115, 119, 0.25) !important;
+    }
+    .marker-cluster-small div,
+    .marker-cluster-medium div,
+    .marker-cluster-large div {
+      background-color: #0d7377 !important;
+      color: white !important;
+      font-family: 'Cairo', sans-serif !important;
+      font-weight: 700 !important;
     }
   </style>
 </head>
@@ -497,6 +522,7 @@
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   
   <script>
     // ============== CONFIG ==============
@@ -525,14 +551,19 @@
 
       L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-      // Carto tiles (more reliable + free for this usage)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap © CARTO',
-        subdomains: 'abcd',
-        maxZoom: 20
+      // Esri World Street Map - مجاني وموثوق 100% ولا يحتاج أي API Key
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri',
+        maxZoom: 19
       }).addTo(map);
 
-      markersLayer = L.layerGroup().addTo(map);
+      // مجموعة عنقودية للمؤشرات (تبدو أجمل لما يكون في نقاط كثيرة)
+      markersLayer = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        disableClusteringAtZoom: 17
+      }).addTo(map);
     }
 
     // ============== PARSE CSV ==============
@@ -643,10 +674,22 @@
       markersLayer.clearLayers();
       markersById = {};
 
+      // أيقونة مخصصة جميلة بلون الشركة
+      const alajamyIcon = L.divIcon({
+        className: 'alajamy-marker',
+        html: `<div class="pin">
+                 <div class="pin-inner"></div>
+               </div>`,
+        iconSize: [32, 42],
+        iconAnchor: [16, 42],
+        popupAnchor: [0, -36]
+      });
+
       locations.forEach(loc => {
         const marker = L.marker([loc.lat, loc.lng], {
-          title: loc.market
-        }).addTo(markersLayer);
+          title: loc.market,
+          icon: alajamyIcon
+        });
 
         marker.bindPopup(createPopupContent(loc), {
           maxWidth: 300,
@@ -657,12 +700,12 @@
           highlightCard(loc.id);
         });
 
+        markersLayer.addLayer(marker);
         markersById[loc.id] = marker;
       });
 
       if (locations.length > 0) {
-        const group = L.featureGroup(Object.values(markersById));
-        map.fitBounds(group.getBounds().pad(0.15));
+        map.fitBounds(markersLayer.getBounds().pad(0.12));
       }
     }
 

@@ -4,17 +4,32 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>العجمي | Alajamy - خريطة الماركتات</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0d7377" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="العجمي" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--primary:#0d7377;--dark:#0a5c5f;--accent:#14919b;--bg:#f4f7f7;--card:#fff;--text:#1a1a1a;--muted:#5a6a6a;--border:#e0e8e8;--peek:132px}
+:root{--primary:#0d7377;--dark:#0a5c5f;--accent:#14919b;--bg:#f4f7f7;--card:#fff;--text:#1a1a1a;--muted:#5a6a6a;--border:#e0e8e8}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
 html,body{height:100%}
 body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 
-header{background:linear-gradient(135deg,#0d7377,#14919b);color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);z-index:1000;flex-shrink:0}
+header{background:linear-gradient(135deg,#0d7377,#14919b);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 20px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);z-index:1000;flex-shrink:0}
 .logo-area{display:flex;align-items:center;gap:12px;min-width:0}
 .logo-area img{height:44px;background:#fff;border-radius:10px;padding:3px 8px}
 .header-title h1{font-size:1.25rem;font-weight:800;line-height:1.2}
@@ -23,9 +38,10 @@ header{background:linear-gradient(135deg,#0d7377,#14919b);color:#fff;padding:10p
 .stat-box{background:rgba(255,255,255,.15);padding:5px 12px;border-radius:12px;text-align:center;min-width:64px}
 .stat-box .number{font-size:1.25rem;font-weight:800;display:block;line-height:1.2}
 .stat-box .label{font-size:.7rem;opacity:.9}
-.refresh-info{font-size:.75rem;opacity:.85;display:flex;align-items:center;gap:6px}
+.refresh-info{font-size:.75rem;opacity:.9;display:flex;align-items:center;gap:6px}
 .refresh-dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{50%{opacity:.4}}
+.install-btn{border:none;background:#fff;color:var(--primary);font-family:inherit;font-weight:700;font-size:.85rem;padding:8px 14px;border-radius:12px;cursor:pointer}
 
 .main{flex:1;display:flex;overflow:hidden;position:relative;min-height:0}
 #map{flex:1;height:100%;z-index:1}
@@ -33,9 +49,10 @@ header{background:linear-gradient(135deg,#0d7377,#14919b);color:#fff;padding:10p
 .sidebar{width:360px;background:var(--card);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:500}
 .handle{display:none}
 .sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);background:#fafcfc}
-.sidebar-header h2{font-size:1.05rem;font-weight:700;color:var(--primary);margin-bottom:8px}
+.sidebar-header h2{font-size:1.05rem;font-weight:700;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:8px;user-select:none;-webkit-user-select:none}
+.count-pill{background:#e8f4f4;color:var(--primary);font-size:.75rem;font-weight:800;padding:1px 9px;border-radius:20px}
 .search-box{position:relative}
-.search-box input{width:100%;padding:10px 40px 10px 14px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:16px;outline:none}
+.search-box input{width:100%;padding:10px 40px 10px 14px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:16px;outline:none;background:#fff}
 .search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(20,145,155,.15)}
 .search-box::after{content:"🔍";position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.9rem;opacity:.5;pointer-events:none}
 .list-container{flex:1;overflow-y:auto;padding:10px;overscroll-behavior:contain}
@@ -56,15 +73,17 @@ header{background:linear-gradient(135deg,#0d7377,#14919b);color:#fff;padding:10p
 .d-head div{flex:1;min-width:0}
 .d-head h3{font-size:1.1rem;font-weight:700;line-height:1.35}
 .d-head small{font-size:.78rem;opacity:.9}
-.d-close{border:none;background:rgba(255,255,255,.22);color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.2rem;cursor:pointer;flex-shrink:0}
+.d-close{border:none;background:rgba(255,255,255,.22);color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;flex-shrink:0}
 .d-body{padding:4px 14px}
 .d-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:.9rem}
 .d-row:last-child{border-bottom:none}
 .d-row span:first-child{color:var(--muted)}
 .d-row span:last-child{font-weight:600}
 .d-actions{padding:10px 14px 14px;display:flex;gap:8px}
-.btn{flex:1;padding:11px 10px;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;text-align:center;text-decoration:none;border:1px solid var(--border);background:#fff;color:var(--primary)}
+.btn{flex:1;padding:12px 10px;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;text-align:center;text-decoration:none;border:1px solid var(--border);background:#fff;color:var(--primary)}
 .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+.toast{position:fixed;z-index:3000;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:#1a1a1a;color:#fff;border-radius:14px;padding:12px 16px;font-size:.9rem;line-height:1.6;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.3)}
 
 .empty-state,.loading{text-align:center;padding:36px 16px;color:var(--muted)}
 .spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
@@ -78,22 +97,23 @@ header{background:linear-gradient(135deg,#0d7377,#14919b);color:#fff;padding:10p
 .marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background-color:#0d7377!important;color:#fff!important;font-family:'Cairo',sans-serif!important;font-weight:700!important}
 
 @media (max-width:768px){
-  header{padding:8px 12px}
+  header{padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px}
   .logo-area img{height:36px}
   .header-title h1{font-size:1rem}
   .header-title p,.refresh-info{display:none}
-  .stat-box{min-width:56px;padding:4px 9px}
+  .stat-box{min-width:52px;padding:4px 9px}
   .stat-box .number{font-size:1.05rem}
+  .install-btn{padding:7px 11px;font-size:.8rem}
 
-  /* map fills the screen; list is a bottom sheet */
-  .sidebar{position:absolute;left:0;right:0;bottom:0;width:100%;height:60%;border:none;border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.14);transform:translateY(calc(100% - var(--peek)));transition:transform .3s ease}
-  .sidebar.open{transform:none}
-  .handle{display:block;width:100%;padding:10px 0 4px;border:none;background:none;cursor:pointer}
-  .handle::before{content:"";display:block;width:42px;height:5px;border-radius:3px;background:#c5d2d2;margin:0 auto}
-  .sidebar-header{padding:0 14px 10px;border:none;background:none}
-  .sidebar-header h2{display:none}
-  .sidebar.hide{transform:translateY(105%)}
-
+  /* Bottom sheet: height is fixed, position is set by JS (peek / half / full) */
+  .sidebar{position:absolute;left:0;right:0;bottom:0;width:100%;height:88%;border:none;border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.16);transform:translateY(calc(100% - 112px));transition:transform .3s cubic-bezier(.2,.8,.2,1);will-change:transform}
+  .sidebar.hide{transform:translateY(110%)!important}
+  .handle{display:block;width:100%;padding:10px 0 6px;border:none;background:none;cursor:pointer;touch-action:none}
+  .handle::before{content:"";display:block;width:44px;height:5px;border-radius:3px;background:#b9c8c8;margin:0 auto}
+  .sidebar-header{padding:0 14px 10px;border:none;background:none;touch-action:none}
+  .sidebar-header h2{margin-bottom:6px}
+  .list-container{padding:4px 10px calc(24px + env(safe-area-inset-bottom,0px));overflow:hidden;touch-action:none}
+  .sidebar.full .list-container{overflow-y:auto;touch-action:pan-y}
   .detail{left:10px;right:10px;width:auto;max-width:none;bottom:calc(10px + env(safe-area-inset-bottom,0px))}
   .leaflet-control-zoom{display:none}
 }
@@ -107,17 +127,18 @@ header{background:linear-gradient(135deg,#0d7377,#14919b);color:#fff;padding:10p
     <div class="header-title"><h1>العجمي · Alajamy</h1><p>خريطة الماركتات والتوزيع · Since 1989</p></div>
   </div>
   <div class="stats">
+    <button class="install-btn" id="installBtn" hidden>تثبيت التطبيق</button>
     <div class="stat-box"><span class="number" id="totalCount">0</span><span class="label">ماركت</span></div>
     <div class="stat-box"><span class="number" id="todayCount">0</span><span class="label">اليوم</span></div>
     <div class="refresh-info"><span class="refresh-dot"></span><span id="lastUpdate">جاري التحميل...</span></div>
   </div>
 </header>
 
-<div class="main">
+<div class="main" id="main">
   <aside class="sidebar" id="sidebar">
-    <button class="handle" id="handle" aria-label="فتح أو إغلاق القائمة"></button>
+    <button class="handle" id="handle" aria-label="رفع أو خفض القائمة"></button>
     <div class="sidebar-header">
-      <h2>قائمة الماركتات</h2>
+      <h2>قائمة الماركتات <span class="count-pill" id="listCount">0</span></h2>
       <div class="search-box"><input type="search" id="searchInput" placeholder="ابحث باسم الماركت أو الموزع..." /></div>
     </div>
     <div class="list-container" id="listContainer"><div class="loading"><div class="spinner"></div><p>جاري تحميل البيانات...</p></div></div>
@@ -133,22 +154,35 @@ header{background:linear-gradient(135deg,#0d7377,#14919b);color:#fff;padding:10p
 <script>
 const SHEET_ID = "1WSZICC3xS160g3MVaj8MgUHDcjcckQxzEMIbzgluZ8I";
 const REFRESH_INTERVAL = 45000;
+const PEEK = 112; // visible height of the sheet when collapsed (px)
+
 const isMobile = () => window.matchMedia('(max-width:768px)').matches;
+const pad2 = (n) => String(n).padStart(2, '0');
 
 let map, cluster, allLocations = [], markersById = {}, selectedId = null, lastText = '', firstLoad = true;
+let sheetState = 'half', lastSheetState = 'half';
+
+const sb = document.getElementById('sidebar');
+const detailEl = document.getElementById('detail');
+const searchEl = document.getElementById('searchInput');
 
 const iconNormal = L.divIcon({className:'alajamy-marker',html:'<div class="pin"></div>',iconSize:[32,42],iconAnchor:[16,42]});
 const iconSel = L.divIcon({className:'alajamy-marker sel',html:'<div class="pin"></div>',iconSize:[32,42],iconAnchor:[16,42]});
 
+/* ================= MAP ================= */
 function initMap(){
-  map = L.map('map',{center:[36.83,34.68],zoom:12,zoomControl:false});
-  if(!isMobile()) L.control.zoom({position:'bottomleft'}).addTo(map);
+  map = L.map('map',{center:[36.83,34.68],zoom:12,zoomControl:false,attributionControl:false});
+  L.control.zoom({position:'bottomleft'}).addTo(map); // hidden on phones via CSS
+  L.control.attribution({position:'topleft',prefix:false}).addTo(map);
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles &copy; Esri',maxZoom:19}).addTo(map);
   cluster = L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:50,spiderfyOnMaxZoom:true,disableClusteringAtZoom:17}).addTo(map);
-  map.on('click', closeDetail); // tap on empty map closes the card
+  map.on('click',()=>{
+    if(selectedId!==null) closeDetail();
+    else if(isMobile() && sheetState!=='peek') applySheet('peek');
+  });
 }
 
-/* ---------- CSV ---------- */
+/* ================= CSV ================= */
 function parseCSVLine(line){
   const out=[];let cur='',q=false;
   for(const ch of line){
@@ -156,9 +190,10 @@ function parseCSVLine(line){
     else if(ch===','&&!q){out.push(cur.trim());cur='';}
     else cur+=ch;
   }
-  out.push(cur.trim());return out;
+  out.push(cur.trim());
+  return out;
 }
-function dateKey(s){ // DD/MM/YYYY HH:MM:SS -> sortable number
+function dateKey(s){ // "DD/MM/YYYY HH:MM:SS" -> timestamp
   const m=(s||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\D+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
   if(!m) return 0;
   return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)).getTime();
@@ -172,133 +207,284 @@ function parseCSV(text){
     const v=parseCSVLine(lines[i]);
     if(v.length<6) continue;
     const row={};
-    headers.forEach((h,idx)=>row[h]=v[idx]||'');
+    headers.forEach((h,idx)=>{row[h]=v[idx]||'';});
     const lat=parseFloat(row['الاحداثيات الطول']||row[headers[4]]);
     const lng=parseFloat(row['الاحداثيات العرض']||row[headers[5]]);
     if(isNaN(lat)||isNaN(lng)) continue;
     const date=row['التاريخ']||'';
-    rows.push({id:i,date,ts:dateKey(date)||i,distributor:row['اسم الموزع']||'',market:row['اسم الماركت']||'غير محدد',
-      phone:row['رقم هاتف الماركت']||'',lat,lng,qty:row['---']||row[headers[6]]||'',
-      mapsLink:(row['رابط الموقع']||'').replace(/^"|"$/g,'')});
+    rows.push({
+      id:i,date,ts:dateKey(date)||i,
+      distributor:row['اسم الموزع']||'',
+      market:row['اسم الماركت']||'غير محدد',
+      phone:row['رقم هاتف الماركت']||'',
+      lat,lng,
+      qty:row['---']||row[headers[6]]||'',
+      mapsLink:(row['رابط الموقع']||'').replace(/^"|"$/g,'')
+    });
   }
   return rows;
 }
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-const validPhone=p=>p&&p!=='0'?p:null;
+function validPhone(p){return p&&p!=='0'?p:null;}
 
-/* ---------- Render ---------- */
+/* ================= RENDER ================= */
 function renderMarkers(locs,fit){
-  cluster.clearLayers();markersById={};
+  cluster.clearLayers();
+  markersById={};
   locs.forEach(loc=>{
     const m=L.marker([loc.lat,loc.lng],{title:loc.market,icon:loc.id===selectedId?iconSel:iconNormal});
     m.on('click',e=>{L.DomEvent.stopPropagation(e);selectLocation(loc.id);});
-    cluster.addLayer(m);markersById[loc.id]=m;
+    cluster.addLayer(m);
+    markersById[loc.id]=m;
   });
   if(fit&&locs.length) map.fitBounds(cluster.getBounds().pad(0.12));
 }
 
 function renderList(locs){
+  document.getElementById('listCount').textContent=locs.length;
   const box=document.getElementById('listContainer');
-  if(!locs.length){box.innerHTML='<div class="empty-state"><p style="font-size:2rem">📍</p><p>لا توجد نتائج</p></div>';return;}
+  if(!locs.length){
+    box.innerHTML='<div class="empty-state"><p style="font-size:2rem">📍</p><p>لا توجد نتائج</p></div>';
+    return;
+  }
   const num={};
-  [...allLocations].sort((a,b)=>a.ts-b.ts).forEach((l,i)=>num[l.id]=i+1);
+  [...allLocations].sort((a,b)=>a.ts-b.ts).forEach((l,i)=>{num[l.id]=i+1;});
   box.innerHTML=[...locs].sort((a,b)=>b.ts-a.ts).map(loc=>{
     const ph=validPhone(loc.phone);
-    return `<div class="location-card${loc.id===selectedId?' active':''}" data-id="${loc.id}">
-      <div class="market-name"><span class="order-num">#${num[loc.id]}</span>${esc(loc.market)}${loc.qty?`<span class="badge">${esc(loc.qty)}</span>`:''}</div>
-      <div class="meta"><span>👤 ${esc(loc.distributor||'—')}</span>${ph?`<span class="phone">📞 ${esc(ph)}</span>`:''}<span>🕒 ${esc(loc.date.split(' ')[0]||loc.date)}</span></div>
-    </div>`;
+    return '<div class="location-card'+(loc.id===selectedId?' active':'')+'" data-id="'+loc.id+'">'+
+      '<div class="market-name"><span class="order-num">#'+num[loc.id]+'</span>'+esc(loc.market)+
+        (loc.qty?'<span class="badge">'+esc(loc.qty)+'</span>':'')+'</div>'+
+      '<div class="meta"><span>👤 '+esc(loc.distributor||'—')+'</span>'+
+        (ph?'<span class="phone">📞 '+esc(ph)+'</span>':'')+
+        '<span>🕒 '+esc(loc.date.split(' ')[0]||loc.date)+'</span></div>'+
+    '</div>';
   }).join('');
+}
+
+function setLastUpdate(){
+  const d=new Date();
+  document.getElementById('lastUpdate').textContent='آخر تحديث: '+pad2(d.getHours())+':'+pad2(d.getMinutes());
 }
 
 function updateStats(locs){
   document.getElementById('totalCount').textContent=locs.length;
-  const d=new Date(),p=n=>String(n).padStart(2,'0');
-  const today=`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`;
+  const d=new Date();
+  const today=pad2(d.getDate())+'/'+pad2(d.getMonth()+1)+'/'+d.getFullYear();
   document.getElementById('todayCount').textContent=locs.filter(l=>l.date.trim().startsWith(today)).length;
-  document.getElementById('lastUpdate').textContent='آخر تحديث: '+d.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+  setLastUpdate();
 }
 
-/* ---------- Selection + detail card ---------- */
+/* ================= SELECTION + DETAIL CARD ================= */
 function selectLocation(id){
-  const loc=allLocations.find(l=>l.id===id);if(!loc) return;
-  const prev=markersById[selectedId];if(prev) prev.setIcon(iconNormal);
+  const loc=allLocations.find(l=>l.id===id);
+  if(!loc) return;
+  const prev=markersById[selectedId];
+  if(prev) prev.setIcon(iconNormal);
   selectedId=id;
-  const m=markersById[id];if(m) m.setIcon(iconSel);
+  const m=markersById[id];
+  if(m) m.setIcon(iconSel);
 
   const ph=validPhone(loc.phone);
-  const url=loc.mapsLink||`https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
-  const d=document.getElementById('detail');
-  d.innerHTML=`<div class="d-head"><div><h3>${esc(loc.market)}</h3><small>${esc(loc.date)}</small></div>
-      <button class="d-close" id="dClose" aria-label="إغلاق">✕</button></div>
-    <div class="d-body">
-      <div class="d-row"><span>الموزع</span><span>${esc(loc.distributor||'—')}</span></div>
-      <div class="d-row"><span>الهاتف</span><span style="direction:ltr">${esc(ph||'—')}</span></div>
-      <div class="d-row"><span>دقة الموقع بالمتر</span><span>${esc(loc.qty||'—')}</span></div>
-    </div>
-    <div class="d-actions"><a class="btn primary" href="${esc(url)}" target="_blank" rel="noopener">فتح في خرائط جوجل</a>${ph?`<a class="btn" href="tel:${esc(ph)}">اتصال</a>`:''}</div>`;
-  d.classList.add('show');
+  const url=loc.mapsLink||('https://www.google.com/maps?q='+loc.lat+','+loc.lng);
+  detailEl.innerHTML=
+    '<div class="d-head"><div><h3>'+esc(loc.market)+'</h3><small>'+esc(loc.date)+'</small></div>'+
+      '<button class="d-close" id="dClose" aria-label="إغلاق">✕</button></div>'+
+    '<div class="d-body">'+
+      '<div class="d-row"><span>الموزع</span><span>'+esc(loc.distributor||'—')+'</span></div>'+
+      '<div class="d-row"><span>الهاتف</span><span style="direction:ltr">'+esc(ph||'—')+'</span></div>'+
+      '<div class="d-row"><span>دقة الموقع بالمتر</span><span>'+esc(loc.qty||'—')+'</span></div>'+
+    '</div>'+
+    '<div class="d-actions"><a class="btn primary" href="'+esc(url)+'" target="_blank" rel="noopener">فتح في خرائط جوجل</a>'+
+      (ph?'<a class="btn" href="tel:'+esc(ph)+'">اتصال</a>':'')+'</div>';
+  detailEl.classList.add('show');
   document.getElementById('dClose').onclick=closeDetail;
 
-  const sb=document.getElementById('sidebar');sb.classList.remove('open');if(isMobile()) sb.classList.add('hide');
+  if(isMobile()){
+    if(!sb.classList.contains('hide')) lastSheetState=sheetState;
+    sb.classList.add('hide');
+  }
 
-  // centre the pin in the visible part of the map (above the card)
+  // put the pin in the visible part of the map, above the card
   const z=Math.max(map.getZoom(),17);
-  const size=map.getSize();
-  const shift=isMobile()?size.y*0.2:0;
-  const pt=map.project([loc.lat,loc.lng],z);pt.y+=shift;
+  const shift=isMobile()?map.getSize().y*0.2:0;
+  const pt=map.project([loc.lat,loc.lng],z);
+  pt.y+=shift;
   map.setView(map.unproject(pt,z),z,{animate:true});
 
   document.querySelectorAll('.location-card').forEach(el=>el.classList.toggle('active',+el.dataset.id===id));
-  const card=document.querySelector(`.location-card[data-id="${id}"]`);
-  if(card&&!isMobile()) card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(!isMobile()){
+    const card=document.querySelector('.location-card[data-id="'+id+'"]');
+    if(card) card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
 }
 
 function closeDetail(){
-  document.getElementById('detail').classList.remove('show');
-  const m=markersById[selectedId];if(m) m.setIcon(iconNormal);
+  detailEl.classList.remove('show');
+  const m=markersById[selectedId];
+  if(m) m.setIcon(iconNormal);
   selectedId=null;
-  document.getElementById('sidebar').classList.remove('hide');
   document.querySelectorAll('.location-card.active').forEach(el=>el.classList.remove('active'));
+  if(sb.classList.contains('hide')){
+    sb.classList.remove('hide');
+    applySheet(lastSheetState);
+  }
 }
 
-/* ---------- Events ---------- */
-document.getElementById('listContainer').addEventListener('click',e=>{
-  const c=e.target.closest('.location-card');if(c) selectLocation(+c.dataset.id);
+/* ================= BOTTOM SHEET (mobile) ================= */
+function sheetMetrics(){
+  const SH=sb.offsetHeight;
+  const mainH=document.getElementById('main').clientHeight;
+  return {SH, vis:{peek:PEEK, half:Math.min(Math.round(mainH*0.5),SH), full:SH}};
+}
+function applySheet(state,animate){
+  if(!isMobile()){
+    sb.style.transform='';sb.style.transition='';sb.classList.remove('full','hide');
+    return;
+  }
+  sheetState=state;
+  const m=sheetMetrics();
+  sb.style.transition=(animate===false)?'none':'';
+  sb.style.transform='translateY('+(m.SH-m.vis[state])+'px)';
+  sb.classList.toggle('full',state==='full');
+  if(animate===false){void sb.offsetHeight;sb.style.transition='';}
+}
+
+let drag=null;
+sb.addEventListener('pointerdown',e=>{
+  if(!isMobile()||sb.classList.contains('hide')) return;
+  if(e.target.closest('input')) return;
+  if(sheetState==='full'&&e.target.closest('#listContainer')) return; // let the list scroll
+  const m=sheetMetrics();
+  drag={id:e.pointerId,y0:e.clientY,yPrev:e.clientY,tPrev:performance.now(),v:0,base:m.SH-m.vis[sheetState],m,moved:false};
 });
-document.getElementById('handle').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
-const searchEl=document.getElementById('searchInput');
-searchEl.addEventListener('focus',()=>{if(isMobile()) document.getElementById('sidebar').classList.add('open');});
+sb.addEventListener('pointermove',e=>{
+  if(!drag||e.pointerId!==drag.id) return;
+  const dy=e.clientY-drag.y0;
+  if(!drag.moved){
+    if(Math.abs(dy)<6) return;
+    drag.moved=true;
+    try{sb.setPointerCapture(e.pointerId);}catch(_){}
+    sb.style.transition='none';
+  }
+  const now=performance.now();
+  const dt=now-drag.tPrev;
+  if(dt>0) drag.v=(e.clientY-drag.yPrev)/dt; // px per ms, positive = moving down
+  drag.yPrev=e.clientY;drag.tPrev=now;
+  const y=Math.min(Math.max(drag.base+dy,0),drag.m.SH-drag.m.vis.peek);
+  drag.cur=y;
+  sb.style.transform='translateY('+y+'px)';
+});
+function endDrag(e){
+  if(!drag||e.pointerId!==drag.id) return;
+  const d=drag;drag=null;
+  if(!d.moved) return;
+  sb.style.transition='';
+  try{sb.releasePointerCapture(e.pointerId);}catch(_){}
+  const visible=d.m.SH-d.cur-d.v*160; // project with velocity
+  let best='half',bestDist=Infinity;
+  ['peek','half','full'].forEach(s=>{
+    const dist=Math.abs(d.m.vis[s]-visible);
+    if(dist<bestDist){bestDist=dist;best=s;}
+  });
+  applySheet(best);
+}
+sb.addEventListener('pointerup',endDrag);
+sb.addEventListener('pointercancel',endDrag);
+
+document.getElementById('handle').addEventListener('click',()=>{
+  applySheet(sheetState==='peek'?'half':sheetState==='half'?'full':'peek');
+});
+
+window.addEventListener('resize',()=>applySheet(sheetState,false));
+
+/* ================= EVENTS ================= */
+document.getElementById('listContainer').addEventListener('click',e=>{
+  const c=e.target.closest('.location-card');
+  if(c) selectLocation(+c.dataset.id);
+});
+searchEl.addEventListener('focus',()=>{if(isMobile()) applySheet('full');});
 searchEl.addEventListener('input',applyFilter);
 
 function applyFilter(){
   const q=searchEl.value.trim().toLowerCase();
-  const f=!q?allLocations:allLocations.filter(l=>(l.market||'').toLowerCase().includes(q)||(l.distributor||'').toLowerCase().includes(q)||(l.phone||'').includes(q));
-  renderList(f);renderMarkers(f,!!q&&f.length>0);
+  const f=!q?allLocations:allLocations.filter(l=>
+    (l.market||'').toLowerCase().includes(q)||
+    (l.distributor||'').toLowerCase().includes(q)||
+    (l.phone||'').includes(q));
+  renderList(f);
+  renderMarkers(f,!!q&&f.length>0);
 }
 
-/* ---------- Data ---------- */
+/* ================= DATA ================= */
 async function loadData(){
   try{
-    const res=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0&t=${Date.now()}`,{cache:'no-store'});
+    const res=await fetch('https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid=0&t='+Date.now(),{cache:'no-store'});
     if(!res.ok) throw new Error('HTTP '+res.status);
     const text=await res.text();
     if(!text.includes(',')) throw new Error('Invalid CSV');
-    if(text===lastText){updateStats(allLocations);return;} // nothing changed: leave the UI alone
+    if(text===lastText){setLastUpdate();return;} // nothing changed: leave the UI alone
     lastText=text;
     allLocations=parseCSV(text);
     applyFilter();
-    if(firstLoad&&allLocations.length){map.fitBounds(cluster.getBounds().pad(0.12));firstLoad=false;}
+    if(firstLoad&&allLocations.length){
+      map.fitBounds(cluster.getBounds().pad(0.12));
+      firstLoad=false;
+    }
     updateStats(allLocations);
   }catch(err){
     console.error('Failed to load data:',err);
-    if(!allLocations.length) document.getElementById('listContainer').innerHTML='<div class="empty-state"><p style="font-size:1.5rem">⚠️</p><p>تعذر تحميل البيانات</p><p style="font-size:.85rem;margin-top:8px">تأكد أن الشيت منشور للعامة<br>(Share → Anyone with the link)</p></div>';
+    if(!allLocations.length){
+      document.getElementById('listContainer').innerHTML=
+        '<div class="empty-state"><p style="font-size:1.5rem">⚠️</p><p>تعذر تحميل البيانات</p>'+
+        '<p style="font-size:.85rem;margin-top:8px;line-height:1.6">تأكد أن الشيت منشور للعامة<br>(Share → Anyone with the link)</p></div>';
+    }
     document.getElementById('lastUpdate').textContent='فشل التحديث';
   }
 }
 
+/* ================= PWA ================= */
+let deferredPrompt=null;
+const installBtn=document.getElementById('installBtn');
+const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+
+function showToast(msg){
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),6000);
+}
+
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  installBtn.hidden=false;
+});
+window.addEventListener('appinstalled',()=>{
+  deferredPrompt=null;
+  installBtn.hidden=true;
+});
+if(isIOS&&!isStandalone()) installBtn.hidden=false; // iOS has no install prompt API
+
+installBtn.addEventListener('click',async()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt=null;
+    installBtn.hidden=true;
+  }else if(isIOS){
+    showToast('للتثبيت: اضغط زر المشاركة في سفاري، ثم "إضافة إلى الشاشة الرئيسية"');
+  }
+});
+
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(err=>console.warn('SW failed',err));});
+}
+
+/* ================= START ================= */
 initMap();
+applySheet('half',false);
 loadData();
 setInterval(loadData,REFRESH_INTERVAL);
 </script>

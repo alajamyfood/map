@@ -234,6 +234,18 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .location-card .market-name .order-num {
+      background: #e8f4f4;
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 8px;
+      min-width: 32px;
+      text-align: center;
     }
 
     .location-card .market-name .badge {
@@ -243,6 +255,7 @@
       padding: 2px 8px;
       border-radius: 20px;
       font-weight: 600;
+      margin-right: auto; /* يدفعه لليسار */
     }
 
     .location-card .meta {
@@ -400,34 +413,132 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Mobile responsive */
+    /* ========== Mobile First Improvements ========== */
     @media (max-width: 768px) {
-      .sidebar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        height: 45%;
-        border-left: none;
-        border-top: 1px solid var(--border);
-        border-radius: 20px 20px 0 0;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-      }
-
-      .stats {
-        display: none;
-      }
-
       header {
-        padding: 10px 16px;
+        padding: 10px 14px;
+        gap: 10px;
+      }
+
+      .logo-area {
+        gap: 10px;
       }
 
       .logo-area img {
-        height: 44px;
+        height: 40px;
+        padding: 3px 8px;
       }
 
       .header-title h1 {
+        font-size: 1.05rem;
+      }
+
+      .header-title p {
+        font-size: 0.72rem;
+      }
+
+      .stats {
+        gap: 8px;
+      }
+
+      .stat-box {
+        padding: 6px 10px;
+        min-width: 64px;
+      }
+
+      .stat-box .number {
+        font-size: 1.2rem;
+      }
+
+      .stat-box .label {
+        font-size: 0.68rem;
+      }
+
+      .refresh-info {
+        display: none; /* إخفاء على الموبايل لتوفير مساحة */
+      }
+
+      .main {
+        flex-direction: column;
+      }
+
+      #map {
+        height: 52vh;
+        min-height: 280px;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: 48vh;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -6px 24px rgba(0,0,0,0.1);
+        z-index: 800;
+      }
+
+      .sidebar-header {
+        padding: 12px 14px 10px;
+      }
+
+      .sidebar-header h2 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+      }
+
+      .search-box input {
+        padding: 11px 14px 11px 40px;
+        font-size: 0.95rem;
+        border-radius: 12px;
+      }
+
+      .list-container {
+        padding: 8px 10px 20px;
+      }
+
+      .location-card {
+        padding: 13px 14px;
+        margin-bottom: 8px;
+        border-radius: 14px;
+      }
+
+      .location-card .market-name {
+        font-size: 1rem;
+        gap: 8px;
+      }
+
+      .location-card .meta {
+        font-size: 0.82rem;
+        gap: 8px;
+        margin-top: 5px;
+      }
+
+      /* أزرار الزوم أكبر على الموبايل */
+      .leaflet-control-zoom a {
+        width: 36px !important;
+        height: 36px !important;
+        line-height: 36px !important;
+        font-size: 18px !important;
+      }
+
+      .leaflet-control-zoom {
+        margin-bottom: 12px !important;
+        margin-left: 12px !important;
+      }
+    }
+
+    /* شاشات صغيرة جداً */
+    @media (max-width: 400px) {
+      .header-title p {
+        display: none;
+      }
+
+      .stat-box {
+        min-width: 56px;
+        padding: 5px 8px;
+      }
+
+      .stat-box .number {
         font-size: 1.1rem;
       }
     }
@@ -722,16 +833,29 @@
         return;
       }
 
-      // Sort by date descending (newest first)
-      const sorted = [...locations].sort((a, b) => {
+      // 1. نرتب من الأقدم للأحدث عشان نحدد الأرقام
+      const chronological = [...locations].sort((a, b) => {
+        return a.date.localeCompare(b.date); // أقدم أولاً
+      });
+
+      // نعطي كل سجل رقمه (الأقدم = 1 ، الأحدث = العدد الكلي)
+      const numberMap = {};
+      chronological.forEach((loc, index) => {
+        numberMap[loc.id] = index + 1;
+      });
+
+      // 2. نعرض القائمة من الأحدث للأقدم (الأحدث فوق)
+      const sortedNewestFirst = [...locations].sort((a, b) => {
         return b.date.localeCompare(a.date);
       });
 
-      container.innerHTML = sorted.map(loc => {
+      container.innerHTML = sortedNewestFirst.map(loc => {
         const phone = loc.phone && loc.phone !== '0' ? loc.phone : null;
+        const num = numberMap[loc.id] || '';
         return `
           <div class="location-card" data-id="${loc.id}" onclick="focusLocation(${loc.id})">
             <div class="market-name">
+              <span class="order-num">#${num}</span>
               ${escapeHtml(loc.market)}
               ${loc.qty ? `<span class="badge">${escapeHtml(loc.qty)}</span>` : ''}
             </div>
@@ -749,13 +873,16 @@
       document.getElementById('totalCount').textContent = locations.length;
 
       const today = new Date();
-      const todayStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
-      
-      // Also try other formats
-      const todayCount = locations.filter(l => {
-        return l.date.includes(todayStr) || 
-               l.date.includes(today.toISOString().slice(0,10)) ||
-               l.date.startsWith(String(today.getDate()).padStart(2,'0') + '/' + String(today.getMonth()+1).padStart(2,'0'));
+      // صيغة التاريخ الموجودة في الشيت: DD/MM/YYYY
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      const todayStr = `${dd}/${mm}/${yyyy}`;
+
+      const todayCount = locations.filter(loc => {
+        if (!loc.date) return false;
+        // يلتقط أي تاريخ يبدأ بـ "21/11/2026" بغض النظر عن الوقت
+        return loc.date.trim().startsWith(todayStr);
       }).length;
 
       document.getElementById('todayCount').textContent = todayCount;

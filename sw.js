@@ -4,9 +4,9 @@ const SHELL = [
   'index.html',
   'manifest.json',
   'logo.png',
-  'icons/icon-192.png',
-  'icons/icon-512.png',
-  'icons/apple-touch-icon.png'
+  'icon-192.png',
+  'icon-512.png',
+  'apple-touch-icon.png'
 ];
 const CDN_HOSTS = ['unpkg.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 const LIVE_HOSTS = ['docs.google.com', 'googleusercontent.com', 'arcgisonline.com'];
